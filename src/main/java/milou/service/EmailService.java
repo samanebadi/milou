@@ -13,9 +13,12 @@ import java.util.List;
 public class EmailService {
     private final AuthService authService;
 
+
+
     public EmailService(AuthService authService) {
-        this.authService = authService;
+        this.authService=   authService;
     }
+
 
     public boolean sendEmail(String subject, String body, List<String> recipientEmails) {
         User sender = authService.getCurrentUser();

@@ -1,11 +1,19 @@
 package milou;
 
 import milou.service.AuthService;
+
+import java.util.List;
 import java.util.Scanner;
+import milou.service.EmailService;
+
+
+
 
 public class MilouApplication {
     private static final Scanner scanner = new Scanner(System.in);
     private static final AuthService authService = new AuthService();
+    private static final EmailService emailService = new EmailService(authService);
+
 
     public static void main(String[] args) {
         while (true) {
@@ -59,7 +67,9 @@ public class MilouApplication {
     }
 
     private static void showUserMenu() {
-        while (true) {
+        EmailService emailService = new EmailService(authService);
+
+        while (authService.getCurrentUser() != null) {
             System.out.println("\nWelcome, " + authService.getCurrentUser().getName());
             System.out.println("1. Send email");
             System.out.println("2. View inbox");
@@ -70,20 +80,34 @@ public class MilouApplication {
 
             switch (choice) {
                 case "1":
-                    System.out.println("[Sending email logic will go here]");
+                    System.out.print("Enter email subject: ");
+                    String subject = scanner.nextLine();
+                    System.out.print("Enter email body: ");
+                    String body = scanner.nextLine();
+                    System.out.print("Enter recipient emails (comma-separated): ");
+                    String recipientsInput = scanner.nextLine();
+                    List<String> recipientEmails = List.of(recipientsInput.split(",\\s*"));
+
+                    emailService.sendEmail(subject, body, recipientEmails);
                     break;
+
                 case "2":
-                    System.out.println("[Inbox logic will go here]");
+                    System.out.println("[Inbox feature not implemented yet]");
                     break;
+
                 case "3":
-                    System.out.println("[Sent emails logic will go here]");
+                    System.out.println("[Sent feature not implemented yet]");
                     break;
+
                 case "4":
                     authService.logout();
                     return;
+
                 default:
                     System.out.println("Invalid option.");
             }
         }
     }
+
 }
+
