@@ -85,6 +85,79 @@ public class EmailService {
         }
     }
 
+    public void viewInbox(User currentUser) {
+        String query = """
+            SELECT e.subject, e.body, u.name AS sender_name, e.creation_date
+            FROM emails e
+            JOIN users u ON e.sender_id = u.id
+            JOIN recipients r ON e.id = r.email_id
+            WHERE r.recipient_id = ?
+            ORDER BY e.creation_date DESC
+        """;
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, currentUser.getId());
+            ResultSet rs = stmt.executeQuery();
+
+            System.out.println("n inbox ");
+            boolean empty = true;
+            while (rs.next()) {
+                empty = false;
+                System.out.println("From: " + rs.getString("sender_name"));
+                System.out.println("Subject: " + rs.getString("subject"));
+                System.out.println("Body: " + rs.getString("body"));
+                System.out.println("Date: " + rs.getTimestamp("creation_date"));
+                System.out.println("-------------------------");
+            }
+
+            if (empty) {
+                System.out.println("inbox is empty.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void viewSent(User currentUser) {
+        String query = """
+            SELECT e.subject, e.body, GROUP_CONCAT(u.name SEPARATOR ', ') AS recipients, e.creation_date
+            FROM emails e
+            JOIN recipients r ON e.id = r.email_id
+            JOIN users u ON r.recipient_id = u.id
+            WHERE e.sender_id = ?
+            GROUP BY e.id
+            ORDER BY e.creation_date DESC
+        """;
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, currentUser.getId());
+            ResultSet rs = stmt.executeQuery();
+
+            System.out.println("\n sent emails ");
+            boolean empty = true;
+            while (rs.next()) {
+                empty = false;
+                System.out.println("To: " + rs.getString("recipients"));
+                System.out.println("Subject: " + rs.getString("subject"));
+                System.out.println("Body: " + rs.getString("body"));
+                System.out.println("Date: " + rs.getTimestamp("creation_date"));
+                System.out.println("-------------------------");
+            }
+
+            if (empty) {
+                System.out.println("You havent sent any emails.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private String generateEmailCode() {
         return "EML-" + System.currentTimeMillis();
     }
