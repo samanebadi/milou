@@ -3,36 +3,36 @@ package milou.service;
 import milou.db.Database;
 import milou.entity.User;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.Optional;
 
 public class AuthService {
+    private final Database database = Database.getInstance();
     private User currentUser;
 
     public boolean signUp(String name, String email, String password) {
-        try (Connection conn = Database.getConnection()) {
+        try (Connection conn = database.getConnection()) {
 
-            PreparedStatement checkStmt = conn.prepareStatement("SELECT id FROM users WHERE email = ?");
-            checkStmt.setString(1, email);
-            ResultSet rs = checkStmt.executeQuery();
-
-            if (rs.next()) {
-                System.out.println("This email already exists.");
-                return false;
+            String checkSql = "SELECT id FROM users WHERE email = ?";
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+                checkStmt.setString(1, email);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next()) {
+                    System.out.println("This email is already registered.");
+                    return false;
+                }
             }
 
 
-            PreparedStatement insertStmt = conn.prepareStatement(
-                    "INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
-            insertStmt.setString(1, name);
-            insertStmt.setString(2, email);
-            insertStmt.setString(3, password);
-
-            insertStmt.executeUpdate();
-            System.out.println("Sign up was successful.");
-            return true;
+            String insertSql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+            try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+                stmt.setString(1, name);
+                stmt.setString(2, email);
+                stmt.setString(3, password);
+                stmt.executeUpdate();
+                System.out.println("Sign up successful! You can now log in.");
+                return true;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -40,24 +40,26 @@ public class AuthService {
     }
 
     public boolean login(String email, String password) {
-        try (Connection conn = Database.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(
-                    "SELECT id, name FROM users WHERE email = ? AND password = ?");
-            stmt.setString(1, email);
-            stmt.setString(2, password);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                int id = rs.getInt("id");
-                String name = rs.getString("name");
-                currentUser = new User(id, name, email, password);
-                System.out.println("Welcome to your account, " + currentUser.getName() + "!");
-                return true;
-            } else {
-                System.out.println("Email or password is incorrect.");
-                return false;
+        try (Connection conn = database.getConnection()) {
+            String sql = "SELECT id, name, email FROM users WHERE email = ? AND password = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, email);
+                stmt.setString(2, password);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    currentUser = new User(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            null
+                    );
+                    System.out.println("Login successful!");
+                    return true;
+                } else {
+                    System.out.println("Invalid email or password.");
+                    return false;
+                }
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -66,7 +68,7 @@ public class AuthService {
 
     public void logout() {
         currentUser = null;
-        System.out.println("Logout successfully completed.");
+        System.out.println("Logged out successfully.");
     }
 
     public User getCurrentUser() {
