@@ -2,103 +2,140 @@ package milou;
 
 import milou.service.AuthService;
 import milou.service.EmailService;
-import java.util.List;
+
 import java.util.Scanner;
 
 public class MilouApplication {
     private static final Scanner scanner = new Scanner(System.in);
-    private static final AuthService authService = new AuthService();
-    private static final EmailService emailService = new EmailService(authService);
+    private static AuthService authService;
+    private static EmailService emailService;
 
     public static void main(String[] args) {
-        while (true) {
-            showMainMenu();
-        }
+        authService = new AuthService();
+        emailService = new EmailService();
+
+        showMainMenu();
     }
 
     private static void showMainMenu() {
-        System.out.println("\nWelcome to Milou Email Service");
-        System.out.println("1: Sign up");
-        System.out.println("2: Login");
-        System.out.println("3: Exit");
-        System.out.print("Enter your choice: ");
-        String choice = scanner.nextLine();
+        while (true) {
+            System.out.println("Welcome to Milou Email Service");
+            System.out.println("[L]ogin  [S]ignup  [E]xit");
+            System.out.print("Enter choice: ");
+            String choice = scanner.nextLine().trim();
 
-        switch (choice) {
-            case "1":
-                handleSignUp();
-                break;
-            case "2":
-                handleLogin();
-                break;
-            case "3":
-                System.out.println("Goodbye!");
-                System.exit(0);
-                break;
-            default:
-                System.out.println("Invalid option.");
+            switch (choice.toUpperCase()) {
+                case "L":
+                case "LOGIN":
+                    handleLogin();
+                    break;
+                case "S":
+                case "SIGNUP":
+                    handleSignup();
+                    break;
+                case "E":
+                case "EXIT":
+                    System.out.println("Goodbye!");
+                    return;
+                default:
+                    System.out.println("Invalid choice!");
+            }
         }
     }
 
-    private static void handleSignUp() {
-        System.out.print("Enter name: ");
-        String name = scanner.nextLine();
-        System.out.print("Enter email: ");
-        String email = scanner.nextLine();
-        System.out.print("Enter password: ");
-        String password = scanner.nextLine();
-        authService.signUp(name, email, password);
-    }
-
     private static void handleLogin() {
-        System.out.print("Enter email: ");
-        String email = scanner.nextLine();
-        System.out.print("Enter password: ");
-        String password = scanner.nextLine();
+        System.out.print("Email: ");
+        String email = scanner.nextLine().trim();
+        System.out.print("Password: ");
+        String password = scanner.nextLine().trim();
 
         if (authService.login(email, password)) {
             showUserMenu();
+        } else {
+            System.out.println("Login failed. Try again.");
+        }
+    }
+
+    private static void handleSignup() {
+        System.out.print("Name: ");
+        String name = scanner.nextLine().trim();
+        System.out.print("Email: ");
+        String email = scanner.nextLine().trim();
+        System.out.print("Password: ");
+        String password = scanner.nextLine().trim();
+
+        if (authService.signup(name, email, password)) {
+            System.out.println("Signup successful! You can now login.");
+        } else {
+            System.out.println("Signup failed. Email might already be in use.");
         }
     }
 
     private static void showUserMenu() {
-        while (authService.getCurrentUser() != null) {
-            System.out.println("\nWelcome, " + authService.getCurrentUser().getName());
-            System.out.println("1: Send email");
-            System.out.println("2: View inbox");
-            System.out.println("3: View sent");
-            System.out.println("4: Logout");
-            System.out.print("Enter your choice: ");
-            String choice = scanner.nextLine();
+        System.out.println("\nWelcome, " + authService.getCurrentUser().getName());
 
-            switch (choice) {
-                case "1":
-                    System.out.print("Enter email subject: ");
-                    String subject = scanner.nextLine();
-                    System.out.print("Enter email body: ");
-                    String body = scanner.nextLine();
-                    System.out.print("Enter recipient emails (comma-separated): ");
-                    String recipientsInput = scanner.nextLine();
-                    List<String> recipientEmails = List.of(recipientsInput.split(",\\s*"));
-                    emailService.sendEmail(subject, body, recipientEmails);
+        while (true) {
+            // نمایش خلاصه ایمیل‌های خوانده نشده
+            emailService.printUnreadSummary(authService.getCurrentUser());
+
+            // نمایش منوی کوتاه
+            System.out.print("[S]end, [V]iew, [R]eply, [F]orward, [L]ogout: ");
+            String action = scanner.nextLine().trim();
+
+            switch (action.toUpperCase()) {
+                case "S":
+                case "SEND":
+                    emailService.sendEmail(authService.getCurrentUser());
                     break;
 
-                case "2":
-                    emailService.viewInbox(authService.getCurrentUser());
+                case "V":
+                case "VIEW":
+                    viewMenu();
                     break;
 
-                case "3":
-                    emailService.viewSent(authService.getCurrentUser());
+                case "R":
+                case "REPLY":
+                    emailService.replyEmail(authService.getCurrentUser());
                     break;
 
-                case "4":
+                case "F":
+                case "FORWARD":
+                    emailService.forwardEmail(authService.getCurrentUser());
+                    break;
+
+                case "L":
+                case "LOGOUT":
                     authService.logout();
+                    System.out.println("Logged out successfully.");
                     return;
 
                 default:
-                    System.out.println("Invalid option.");
+                    System.out.println("Invalid action.");
             }
         }
     }
-}
 
+    private static void viewMenu() {
+        System.out.print("View [A]ll, [U]nread, [S]ent, [C]ode: ");
+        String choice = scanner.nextLine().trim();
+
+        switch (choice.toUpperCase()) {
+            case "A":
+                emailService.viewInbox(authService.getCurrentUser(), false);
+                break;
+            case "U":
+                emailService.viewInbox(authService.getCurrentUser(), true);
+                break;
+            case "S":
+                emailService.viewSent(authService.getCurrentUser());
+                break;
+            case "C":
+                System.out.print("Enter email code: ");
+                String code = scanner.nextLine().trim();
+                emailService.viewEmailByCode(authService.getCurrentUser(), code);
+                break;
+            default:
+                System.out.println("Invalid choice.");
+        }
+    }
+}
