@@ -1,37 +1,29 @@
 package milou.entity;
 
 public class Recipient {
-    private Email email;
-    private User recipient;
+    private int id;
+    private int emailId;
+    private int recipientId;
     private boolean isRead;
 
-    public Recipient(Email email, User recipient, boolean isRead) {
-        this.email = email;
-        this.recipient = recipient;
+    public Recipient() {}
+
+    public Recipient(int id, int emailId, int recipientId, boolean isRead) {
+        this.id = id;
+        this.emailId = emailId;
+        this.recipientId = recipientId;
         this.isRead = isRead;
     }
 
-    public Email getEmail() {
-        return email;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public void setEmail(Email email) {
-        this.email = email;
-    }
+    public int getEmailId() { return emailId; }
+    public void setEmailId(int emailId) { this.emailId = emailId; }
 
-    public User getRecipient() {
-        return recipient;
-    }
+    public int getRecipientId() { return recipientId; }
+    public void setRecipientId(int recipientId) { this.recipientId = recipientId; }
 
-    public void setRecipient(User recipient) {
-        this.recipient = recipient;
-    }
-
-    public boolean isRead() {
-        return isRead;
-    }
-
-    public void setRead(boolean read) {
-        isRead = read;
-    }
+    public boolean isRead() { return isRead; }
+    public void setRead(boolean read) { isRead = read; }
 }

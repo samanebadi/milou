@@ -4,74 +4,84 @@ import milou.db.Database;
 import milou.entity.User;
 
 import java.sql.*;
-import java.util.Optional;
 
 public class AuthService {
-    private final Database database = Database.getInstance();
-    private User currentUser;
+
+    private User currentUser = null;
 
     public boolean signUp(String name, String email, String password) {
-        try (Connection conn = database.getConnection()) {
+        try (Connection conn = Database.getConnection()) {
+            String query = "INSERT INTO users(name,email,password) VALUES(?,?,?)";
+            PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, name);
+            ps.setString(2, email);
+            ps.setString(3, password);
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) return false;
 
-            String checkSql = "SELECT id FROM users WHERE email = ?";
-            try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
-                checkStmt.setString(1, email);
-                ResultSet rs = checkStmt.executeQuery();
-                if (rs.next()) {
-                    System.out.println("This email is already registered.");
-                    return false;
-                }
+            ResultSet generatedKeys = ps.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                currentUser = new User(generatedKeys.getInt(1), name, email, password);
+                currentUser = null; // keep user logged out after signup
             }
-
-
-            String insertSql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-            try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
-                stmt.setString(1, name);
-                stmt.setString(2, email);
-                stmt.setString(3, password);
-                stmt.executeUpdate();
-                System.out.println("Sign up successful! You can now log in.");
-                return true;
-            }
+            return true;
         } catch (SQLException e) {
-            e.printStackTrace();
             return false;
         }
     }
 
     public boolean login(String email, String password) {
-        try (Connection conn = database.getConnection()) {
-            String sql = "SELECT id, name, email FROM users WHERE email = ? AND password = ?";
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, email);
-                stmt.setString(2, password);
-                ResultSet rs = stmt.executeQuery();
-                if (rs.next()) {
-                    currentUser = new User(
-                            rs.getInt("id"),
-                            rs.getString("name"),
-                            rs.getString("email"),
-                            null
-                    );
-                    System.out.println("Login successful!");
-                    return true;
-                } else {
-                    System.out.println("Invalid email or password.");
-                    return false;
-                }
+        try (Connection conn = Database.getConnection()) {
+            String query = "SELECT * FROM users WHERE email=? AND password=?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, email);
+            ps.setString(2, password);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                currentUser = new User(rs.getInt("id"), rs.getString("name"), email, password);
+                return true;
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
         }
+        return false;
     }
 
     public void logout() {
         currentUser = null;
-        System.out.println("Logged out successfully.");
     }
 
     public User getCurrentUser() {
         return currentUser;
+    }
+
+    public User getUserByEmail(String email) {
+        try (Connection conn = Database.getConnection()) {
+            String query = "SELECT * FROM users WHERE email=?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new User(rs.getInt("id"), rs.getString("name"), email, rs.getString("password"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public User getUserById(int id) {
+        try (Connection conn = Database.getConnection()) {
+            String query = "SELECT * FROM users WHERE id=?";
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new User(id, rs.getString("name"), rs.getString("email"), rs.getString("password"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

@@ -1,24 +1,30 @@
 package milou.util;
 
+import java.util.Random;
+import java.util.Scanner;
+
 public class Util {
-        public static String emailInput(String input) {
-            if (input == null) return null;
-            input = input.trim();
-            if (!input.contains("@")) {
-                input = input + "@milou.com";
-            }
-            return input.toLowerCase();
-        }
 
-        public static String generatrCode() {
-            String chars = "jokapk2672jkdskakjdkllo";
-            StringBuilder sb = new StringBuilder(6);
-            java.util.Random rnd = new java.util.Random();
-            for (int i = 0; i < 6; i++) sb.append(chars.charAt(rnd.nextInt(chars.length())));
-            return sb.toString();
-        }
+    private static final Scanner scanner = new Scanner(System.in);
 
-        public static String truncate(String subject) {
-            if (subject == null) return "";
-            return subject.length() <= 255 ? subject : subject.substring(0, 255);  }
+    public static String emailInput() {
+        String email;
+        while (true) {
+            email = scanner.nextLine().trim();
+            if (email.matches("^[\\w-.]+@[\\w-]+\\.[a-z]{2,}$")) break;
+            System.out.print("Invalid email. Try again: ");
+        }
+        return email;
     }
+
+    public static String generateCode() {
+        Random random = new Random();
+        int number = 100000 + random.nextInt(900000);
+        return String.valueOf(number);
+    }
+
+    public static String truncate(String text, int length) {
+        if (text.length() <= length) return text;
+        return text.substring(0, length) + "...";
+    }
+}
