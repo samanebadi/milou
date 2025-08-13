@@ -22,7 +22,7 @@ public class AuthService {
             ResultSet generatedKeys = ps.getGeneratedKeys();
             if (generatedKeys.next()) {
                 currentUser = new User(generatedKeys.getInt(1), name, email, password);
-                currentUser = null; // keep user logged out after signup
+                currentUser = null;
             }
             return true;
         } catch (SQLException e) {
