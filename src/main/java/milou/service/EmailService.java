@@ -133,7 +133,7 @@ public class EmailService {
             int parentId = rs.getInt("id");
             int originalSenderId = rs.getInt("sender_id");
 
-            String subject = "Re: " + rs.getString("subject");
+            String subject = "[Re]: " + rs.getString("subject");
             String code = Util.generateCode();
 
             String insertEmail = "INSERT INTO emails(subject,body,code,sender_id,parent_email_id) VALUES(?,?,?,?,?)";
@@ -201,7 +201,7 @@ public class EmailService {
                 System.out.println("Original email not found.");
                 return;
             }
-            String subject = "Fwd: " + rs.getString("subject");
+            String subject = "[Fw]: " + rs.getString("subject");
             String body = rs.getString("body");
             String code = Util.generateCode();
 

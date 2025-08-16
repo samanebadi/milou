@@ -7,14 +7,14 @@ public class Util {
 
     private static final Scanner scanner = new Scanner(System.in);
 
-    public static String emailInput() {
-        String email;
-        while (true) {
-            email = scanner.nextLine().trim();
-            if (email.matches("^[\\w-.]+@[\\w-]+\\.[a-z]{2,}$")) break;
-            System.out.print("Invalid email. Try again: ");
+    public static String emailInput(String email) {
+       if(email == null) return null;
+       email = email.trim();
+        if(!email.contains("@"))
+        {
+            email = email + "@milou.com";
         }
-        return email;
+        return email.toLowerCase();
     }
 
     public static String generateCode() {
