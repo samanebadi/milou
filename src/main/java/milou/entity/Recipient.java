@@ -1,29 +1,70 @@
 package milou.entity;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "email_recipients")
 public class Recipient {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private int emailId;
-    private int recipientId;
-    private boolean isRead;
 
-    public Recipient() {}
+    @ManyToOne
+    @JoinColumn(name = "email_id", nullable = false)
+    private Email email;
 
-    public Recipient(int id, int emailId, int recipientId, boolean isRead) {
-        this.id = id;
-        this.emailId = emailId;
-        this.recipientId = recipientId;
-        this.isRead = isRead;
+    @ManyToOne
+    @JoinColumn(name = "recipient_id", nullable = false)
+    private User recipient;
+
+    @Column(name = "isRead")
+    private boolean isRead = false;
+
+    @Column(name = "subject")
+    private String subject;
+
+    @Column(name = "body", columnDefinition = "TEXT")
+    private String body;
+
+    public void setBody(String body) {
+        this.body = body;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
 
-    public int getEmailId() { return emailId; }
-    public void setEmailId(int emailId) { this.emailId = emailId; }
+    public String getBody() {
+        return body;
+    }
 
-    public int getRecipientId() { return recipientId; }
-    public void setRecipientId(int recipientId) { this.recipientId = recipientId; }
+    public String getSubject() {
+        return subject;
+    }
 
-    public boolean isRead() { return isRead; }
-    public void setRead(boolean read) { isRead = read; }
+    public int getId() {
+        return id;
+    }
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public Email getEmail() {
+        return email;
+    }
+    public void setEmail(Email email) {
+        this.email = email;
+    }
+
+
+    public void setRecipient(User recipient) {
+        this.recipient = recipient;
+    }
+
+    public boolean isRead() {
+        return isRead;
+    }
+    public void setRead(boolean read) {
+        isRead = read;
+    }
 }

@@ -1,87 +1,60 @@
 package milou.service;
 
-import milou.db.Database;
 import milou.entity.User;
-
-import java.sql.*;
+import milou.util.HibernateUtil;
+import milou.util.Util;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 
 public class AuthService {
+    private User currentUser;
 
-    private User currentUser = null;
+    public boolean signup(String name, String email, String password) {
+        email = Util.emailInput(email);
 
-    public boolean signUp(String name, String email, String password) {
-        try (Connection conn = Database.getConnection()) {
-            String query = "INSERT INTO users(name,email,password) VALUES(?,?,?)";
-            PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, name);
-            ps.setString(2, email);
-            ps.setString(3, password);
-            int affectedRows = ps.executeUpdate();
-            if (affectedRows == 0) return false;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Transaction tx = session.beginTransaction();
 
-            ResultSet generatedKeys = ps.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                currentUser = new User(generatedKeys.getInt(1), name, email, password);
-                currentUser = null;
+            User existing = session.createQuery("from User where email = :email", User.class)
+                    .setParameter("email", email)
+                    .uniqueResult();
+
+            if (existing != null) {
+                System.out.println("Email already exists!");
+                tx.rollback();
+                return false;
             }
+
+            User user = new User(name, email, password);
+            session.persist(user);
+
+            tx.commit();
+            System.out.println("User registered successfully!");
             return true;
-        } catch (SQLException e) {
-            return false;
         }
     }
 
     public boolean login(String email, String password) {
-        try (Connection conn = Database.getConnection()) {
-            String query = "SELECT * FROM users WHERE email=? AND password=?";
-            PreparedStatement ps = conn.prepareStatement(query);
-            ps.setString(1, email);
-            ps.setString(2, password);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                currentUser = new User(rs.getInt("id"), rs.getString("name"), email, password);
-                return true;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+        email = Util.emailInput(email);
 
-    public void logout() {
-        currentUser = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            User user = session.createQuery("from User where email = :email and password = :password", User.class)
+                    .setParameter("email", email)
+                    .setParameter("password", password)
+                    .uniqueResult();
+
+            if (user != null) {
+                currentUser = user;
+                System.out.println("Login successful! Welcome " + user.getName());
+                return true;
+            } else {
+                System.out.println("Invalid credentials.");
+                return false;
+            }
+        }
     }
 
     public User getCurrentUser() {
         return currentUser;
-    }
-
-    public User getUserByEmail(String email) {
-        try (Connection conn = Database.getConnection()) {
-            String query = "SELECT * FROM users WHERE email=?";
-            PreparedStatement ps = conn.prepareStatement(query);
-            ps.setString(1, email);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return new User(rs.getInt("id"), rs.getString("name"), email, rs.getString("password"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public User getUserById(int id) {
-        try (Connection conn = Database.getConnection()) {
-            String query = "SELECT * FROM users WHERE id=?";
-            PreparedStatement ps = conn.prepareStatement(query);
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return new User(id, rs.getString("name"), rs.getString("email"), rs.getString("password"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 }

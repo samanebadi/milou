@@ -16,15 +16,12 @@ public class Util {
         }
         return email.toLowerCase();
     }
-
     public static String generateCode() {
         Random random = new Random();
         int number = 100000 + random.nextInt(900000);
         return String.valueOf(number);
     }
 
-    public static String truncate(String text, int length) {
-        if (text.length() <= length) return text;
-        return text.substring(0, length) + "...";
-    }
+
+
 }

@@ -1,51 +1,86 @@
 package milou.entity;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
-import java.sql.Timestamp;
-
+@Entity
+@Table(name = "emails")
 public class Email {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    @ManyToOne
+    @JoinColumn(name = "sender_id", nullable = false)
+    private User sender;
+    @Column(length = 255)
     private String subject;
+    @Lob
     private String body;
-    private String code;
-    private int senderId;
-    private Timestamp creationDate;
-    private String status;
-    private Integer parentEmailId; // nullable
+    @Column(name = "sent_at")
+    private LocalDateTime sentAt = LocalDateTime.now();
 
-    public Email() {}
+    @OneToMany(mappedBy = "email", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private Set<Recipient> Recipients = new HashSet<>();
 
-    public Email(int id, String subject, String body, String code, int senderId, Timestamp creationDate, String status, Integer parentEmailId) {
+
+
+    @PrePersist
+    protected void create() {
+        sentAt = LocalDateTime.now();
+    }
+    public long getId() {
+        return id;
+    }
+    public void setId(int id) {
         this.id = id;
-        this.subject = subject;
-        this.body = body;
-        this.code = code;
-        this.senderId = senderId;
-        this.creationDate = creationDate;
-        this.status = status;
-        this.parentEmailId = parentEmailId;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public User getSender() {
+        return sender;
+    }
+    public void setSender(User sender) {
+        this.sender = sender;
+    }
 
-    public String getSubject() { return subject; }
-    public void setSubject(String subject) { this.subject = subject; }
+    public String getSubject() {
+        return subject;
+    }
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
 
-    public String getBody() { return body; }
-    public void setBody(String body) { this.body = body; }
+    public String getBody() {
+        return body;
+    }
+    public void setBody(String body) {
+        this.body = body;
+    }
 
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
+    public LocalDateTime getSentAt() {
+        return sentAt;
+    }
+    public void setSentAt(LocalDateTime sentAt) {
+        this.sentAt = sentAt;
+    }
 
-    public int getSenderId() { return senderId; }
-    public void setSenderId(int senderId) { this.senderId = senderId; }
+    public Set<Recipient> getEmailRecipients() {
+        return Recipients;
+    }
+    public void setRecipients(Set<Recipient> emailRecipients) {
+        this.Recipients = Recipients;
+    }
 
-    public Timestamp getCreationDate() { return creationDate; }
-    public void setCreationDate(Timestamp creationDate) { this.creationDate = creationDate; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    @Column(name = "code", unique = true)
+    private String code;
 
-    public Integer getParentEmailId() { return parentEmailId; }
-    public void setParentEmailId(Integer parentEmailId) { this.parentEmailId = parentEmailId; }
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getCode() {
+        return code;
+    }
 }
